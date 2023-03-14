@@ -1,6 +1,6 @@
-name:                panbox
+name:                simon-hs
 version:             0.1.0.0
-github:              "stschiff/panbox"
+github:              "stschiff/simon-hs"
 license:             BSD3
 author:              "Stephan Schiffels"
 maintainer:          "stephan_schiffels@eva.mpg.de"
@@ -17,7 +17,7 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/githubuser/panbox#readme>
+description:         Please see the README on GitHub at <https://github.com/githubuser/simon-hs#readme>
 
 dependencies:
 - base >= 4.7 && < 5
@@ -39,9 +39,10 @@ library:
   - mysql-simple
   - text
   - strict
+  - table-layout
 
 executables:
-  panbox-exe:
+  simon:
     main:                Main.hs
     source-dirs:         app
     # ghc-options:
@@ -49,10 +50,11 @@ executables:
     # - -rtsopts
     # - -with-rtsopts=-N
     dependencies:
-    - panbox
+    - simon-hs
+    - optparse-applicative
 
 tests:
-  panbox-test:
+  simon-test:
     main:                Spec.hs
     source-dirs:         test
     # ghc-options:
@@ -60,4 +62,4 @@ tests:
     # - -rtsopts
     # - -with-rtsopts=-N
     dependencies:
-    - panbox
+    - simon-hs

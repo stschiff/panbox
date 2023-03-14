@@ -1,14 +1,14 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.35.0.
+-- This file has been generated from package.yaml by hpack version 0.35.1.
 --
 -- see: https://github.com/sol/hpack
 
-name:           panbox
+name:           simon-hs
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/panbox#readme>
-homepage:       https://github.com/stschiff/panbox#readme
-bug-reports:    https://github.com/stschiff/panbox/issues
+description:    Please see the README on GitHub at <https://github.com/githubuser/simon-hs#readme>
+homepage:       https://github.com/stschiff/simon-hs#readme
+bug-reports:    https://github.com/stschiff/simon-hs/issues
 author:         Stephan Schiffels
 maintainer:     stephan_schiffels@eva.mpg.de
 copyright:      2023 Stephan Schiffels
@@ -21,41 +21,43 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/stschiff/panbox
+  location: https://github.com/stschiff/simon-hs
 
 library
   exposed-modules:
       Lib
   other-modules:
-      Paths_panbox
+      Paths_simon_hs
   hs-source-dirs:
       src
   build-depends:
       base >=4.7 && <5
     , mysql-simple
     , strict
+    , table-layout
     , text
   default-language: Haskell2010
 
-executable panbox-exe
+executable simon
   main-is: Main.hs
   other-modules:
-      Paths_panbox
+      Paths_simon_hs
   hs-source-dirs:
       app
   build-depends:
       base >=4.7 && <5
-    , panbox
+    , optparse-applicative
+    , simon-hs
   default-language: Haskell2010
 
-test-suite panbox-test
+test-suite simon-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      Paths_panbox
+      Paths_simon_hs
   hs-source-dirs:
       test
   build-depends:
       base >=4.7 && <5
-    , panbox
+    , simon-hs
   default-language: Haskell2010

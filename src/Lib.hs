@@ -1,27 +1,32 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Lib
-    ( get_sites,
-      get_pandora_connection,
-      read_sidora_credentials
+    ( renderCountries,
+      renderSites,
+      getPandoraConnection,
+      readSidoraCredentials,
+      Connection
     ) where
 
-import           Data.Text             (Text)
+import           Data.Text             (Text, unpack)
 import           Data.Word             (Word16)
 import           Database.MySQL.Simple (ConnectInfo (..), Connection, Only,
                                         connect, defaultConnectInfo, query_)
 import           Prelude               hiding (readFile)
 import           System.Environment    (getEnv)
 import           System.IO.Strict      (readFile)
+import           Text.Layout.Table     (asciiRoundS, column, def,
+                                        expand, rowsG, tableString,
+                                        titlesH)
 
-read_sidora_credentials :: IO (String, Word16, String, String)
-read_sidora_credentials = do
+readSidoraCredentials :: IO (String, Word16, String, String)
+readSidoraCredentials = do
     h <- getEnv "HOME"
     [host, portStr, user, password] <- lines <$> readFile (h ++ "/.credentials")
     return (host, read portStr, user, password)
 
-get_pandora_connection :: String -> Word16 -> String -> String -> IO Connection
-get_pandora_connection host port user password = connect defaultConnectInfo {
+getPandoraConnection :: String -> Word16 -> String -> String -> IO Connection
+getPandoraConnection host port user password = connect defaultConnectInfo {
     connectHost     = host,
     connectUser     = user,
     connectPassword = password,
@@ -29,5 +34,35 @@ get_pandora_connection host port user password = connect defaultConnectInfo {
     connectPort     = port
 }
 
-get_sites :: Connection -> IO [(Text, Text)]
-get_sites conn = query_ conn "SELECT DISTINCT Full_Site_Id, Country FROM TAB_Site WHERE Projects LIKE '%MICROSCOPE%'"
+renderCountries :: Connection -> IO ()
+renderCountries conn = do
+    dat <- getCountries
+    let colSpecs = replicate 2 (column def def def def)
+        tableH = ["Country", "Nr_Inds"]
+        tableB = map (\(s, n) -> [unpack s, show n]) dat
+    putStrLn $ tableString colSpecs asciiRoundS (titlesH tableH) [rowsG tableB]
+  where
+    getCountries :: IO [(Text, Int)]
+    getCountries = query_ conn
+        "SELECT S.Country, COUNT(I.Id) \
+        \FROM TAB_Site AS S \
+        \LEFT JOIN TAB_Individual AS I ON I.Site = S.Id \
+        \WHERE I.Projects LIKE '%MICROSCOPE%' \
+        \GROUP BY S.Country"
+
+renderSites :: Connection -> IO ()
+renderSites conn = do
+    dat <- getSites
+    let colSpecs = replicate 3 (column def def def def)
+        tableH = ["Site", "Country", "Nr_Inds"]
+        tableB = map (\(s, c, n) -> [unpack s, unpack c, show n]) dat
+    putStrLn $ tableString colSpecs asciiRoundS (titlesH tableH) [rowsG tableB]
+  where
+    getSites :: IO [(Text, Text, Int)]
+    getSites = query_ conn
+        "SELECT S.Full_Site_Id, S.Country, COUNT(I.Id) \
+        \FROM TAB_Site AS S \
+        \LEFT JOIN TAB_Individual AS I ON I.Site = S.Id \
+        \WHERE I.Projects LIKE '%MICROSCOPE%' \
+        \GROUP BY S.Full_Site_Id \
+        \ORDER BY S.Country"
