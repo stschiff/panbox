@@ -40,6 +40,8 @@ library:
   - text
   - strict
   - table-layout
+  - aeson
+  - directory
 
 executables:
   simon:

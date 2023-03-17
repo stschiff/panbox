@@ -3,6 +3,7 @@
 module Lib
     ( renderCountries,
       renderSites,
+      renderIndividuals,
       getPandoraConnection,
       readSidoraCredentials,
       Connection
@@ -66,3 +67,23 @@ renderSites conn = do
         \WHERE I.Projects LIKE '%MICROSCOPE%' \
         \GROUP BY S.Full_Site_Id \
         \ORDER BY S.Country"
+
+renderIndividuals :: Connection -> [FilePath] -> IO ()
+renderIndividuals conn eagerDirs = do
+    dat <- getSites
+    eagerSnpCov <- readEagerSnpCov eagerDirs
+    print eagerSnpCov
+    let colSpecs = replicate 3 (column def def def def)
+        tableH = ["Individual", "Country", "Nr_Samples"]
+        tableB = map (\(s, c, n) -> [unpack s, unpack c, show n]) dat
+    putStrLn $ tableString colSpecs asciiRoundS (titlesH tableH) [rowsG tableB]
+  where
+    getSites :: IO [(Text, Text, Int)]
+    getSites = query_ conn
+        "SELECT I.Full_Individual_Id, S.Country, COUNT(Sa.Id) \
+        \FROM TAB_Individual AS I \
+        \LEFT JOIN TAB_Sample AS Sa ON I.Id = Sa.Individual \
+        \LEFT JOIN TAB_Site AS S ON I.Site = S.Id \
+        \WHERE Sa.Projects LIKE '%MICROSCOPE%' \
+        \GROUP BY I.Full_Individual_Id \
+        \ORDER BY I.Full_Individual_Id"

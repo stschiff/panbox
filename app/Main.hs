@@ -1,16 +1,34 @@
 module Main (main) where
 
-import Lib
+import           Lib
+
+import           Control.Applicative (many)
 import qualified Options.Applicative as OP
 
 data PandoraEntity = PandoraCountry | PandoraSite | PandoraIndividual | PandoraSample
 
 data Options = Options {
-    _optEntity :: PandoraEntity
+    _optEntity   :: PandoraEntity,
+    _optEagerDir :: [FilePath]
 }
 
+main :: IO ()
+main = do
+    let parserInfo = OP.info (OP.helper <*> optParser) (OP.progDesc "MPI-EVA Pandora access CLI")
+    (Options entity eagerDirs) <- OP.execParser parserInfo
+    (host, port, user, password) <- readSidoraCredentials
+    conn <- getPandoraConnection host port user password
+    case entity of
+        PandoraCountry    -> renderCountries conn
+        PandoraSite       -> renderSites conn
+        PandoraIndividual -> renderIndividuals conn eagerDirs
+        _                 -> undefined
+
 optParser :: OP.Parser Options
-optParser = Options <$> OP.argument (OP.eitherReader readEntity)
+optParser = Options <$> entityOptParser <*> many eagerDirParser
+
+entityOptParser :: OP.Parser PandoraEntity
+entityOptParser = OP.argument (OP.eitherReader readEntity)
     (OP.help "The level to be queried: Can be any of 'Countries', 'Sites', 'Individuals', 'Samples'" <>
      OP.metavar "ENTITY")
   where
@@ -22,13 +40,5 @@ optParser = Options <$> OP.argument (OP.eitherReader readEntity)
         "samples"     -> Right PandoraSample
         e             -> Left $ "Unknown entity type" ++ e
 
-main :: IO ()
-main = do
-    let parserInfo = OP.info (OP.helper <*> optParser) (OP.progDesc "MPI-EVA Pandora access CLI")
-    (Options entity) <- OP.execParser parserInfo
-    (host, port, user, password) <- readSidoraCredentials
-    conn <- getPandoraConnection host port user password
-    case entity of
-        PandoraCountry -> renderCountries conn
-        PandoraSite    -> renderSites conn
-        _              -> undefined
+eagerDirParser :: OP.Parser FilePath
+eagerDirParser = OP.strOption (OP.help "The directory to read eager results from")
