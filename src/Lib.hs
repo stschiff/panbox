@@ -9,6 +9,8 @@ module Lib
       Connection
     ) where
 
+import           Eager                 (readEagerSnpCov)
+
 import           Data.Text             (Text, unpack)
 import           Data.Word             (Word16)
 import           Database.MySQL.Simple (ConnectInfo (..), Connection, Only,
@@ -16,9 +18,8 @@ import           Database.MySQL.Simple (ConnectInfo (..), Connection, Only,
 import           Prelude               hiding (readFile)
 import           System.Environment    (getEnv)
 import           System.IO.Strict      (readFile)
-import           Text.Layout.Table     (asciiRoundS, column, def,
-                                        expand, rowsG, tableString,
-                                        titlesH)
+import           Text.Layout.Table     (asciiRoundS, column, def, expand, rowsG,
+                                        tableString, titlesH)
 
 readSidoraCredentials :: IO (String, Word16, String, String)
 readSidoraCredentials = do

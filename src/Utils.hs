@@ -1,5 +1,7 @@
 module Utils where
 
-data SimonException = EagerParsingException String
+import Control.Exception (Exception)
+
+newtype SimonException = EagerParsingException String deriving (Show)
 
 instance Exception SimonException

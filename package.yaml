@@ -42,6 +42,7 @@ library:
   - table-layout
   - aeson
   - directory
+  - filepath
 
 executables:
   simon:
