@@ -33,11 +33,11 @@ library
   hs-source-dirs:
       src
   build-depends:
-      aeson
+      HDBC-mysql
+    , aeson
     , base >=4.7 && <5
     , directory
     , filepath
-    , mysql-simple
     , strict
     , table-layout
     , text

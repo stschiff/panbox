@@ -5,6 +5,13 @@
 
 packages:
 - completed:
+    hackage: HDBC-mysql-0.7.1.0@sha256:0a10703f7fd1bd19c8061ebd6dd318acbc107d55502936ba21c1ca705ca1d790,1454
+    pantry-tree:
+      sha256: 88c0deba27d970b269b603c24edb10c53966683ff914cce39d30bc77c09cc8c1
+      size: 463
+  original:
+    hackage: HDBC-mysql-0.7.1.0
+- completed:
     hackage: table-layout-0.9.1.0@sha256:172b8b3a06c992839a781b77e42bbce689ba87d92c260acb61d187f7e6aad7f2,7154
     pantry-tree:
       sha256: d3b20ca5e8342d24fa7cfb5e3d39853a14f572f0a95b7bc9d0fea82baa0a4c10
