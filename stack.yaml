@@ -2,8 +2,5 @@ resolver: lts-20.11
 packages:
 - .
 extra-deps:
-- HDBC-mysql-0.7.1.0
 - table-layout-0.9.1.0
-allow-newer: true
-# extra-include-dirs:
-# - /opt/homebrew/include
+# allow-newer: true

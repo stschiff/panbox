@@ -36,7 +36,7 @@ dependencies:
 library:
   source-dirs: src
   dependencies:
-  - HDBC-mysql
+  - mysql-simple
   - text
   - strict
   - table-layout
