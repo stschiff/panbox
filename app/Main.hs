@@ -41,4 +41,4 @@ entityOptParser = OP.argument (OP.eitherReader readEntity)
         e             -> Left $ "Unknown entity type" ++ e
 
 eagerDirParser :: OP.Parser FilePath
-eagerDirParser = OP.strOption (OP.help "The directory to read eager results from")
+eagerDirParser = OP.strOption (OP.long "eagerDir" <> OP.short 'e' <> OP.help "The directory to read eager results from. Can be given multiple times" <> OP.metavar "DIR")

@@ -9,7 +9,7 @@ module Lib
       Connection
     ) where
 
-import           Eager                 (readEagerSnpCov)
+import           Eager                 (readEagerSnpCov, readEagerSexDet)
 
 import           Data.Text             (Text, unpack)
 import           Data.Word             (Word16)
@@ -20,6 +20,7 @@ import           System.Environment    (getEnv)
 import           System.IO.Strict      (readFile)
 import           Text.Layout.Table     (asciiRoundS, column, def, expand, rowsG,
                                         tableString, titlesH)
+import Text.Printf (printf)
 
 readSidoraCredentials :: IO (String, Word16, String, String)
 readSidoraCredentials = do
@@ -73,10 +74,17 @@ renderIndividuals :: Connection -> [FilePath] -> IO ()
 renderIndividuals conn eagerDirs = do
     dat <- getSites
     eagerSnpCov <- readEagerSnpCov eagerDirs
-    print eagerSnpCov
-    let colSpecs = replicate 3 (column def def def def)
-        tableH = ["Individual", "Country", "Nr_Samples"]
-        tableB = map (\(s, c, n) -> [unpack s, unpack c, show n]) dat
+    eagerSexDet <- readEagerSexDet eagerDirs
+    let colSpecs = replicate 9 (column def def def def)
+        tableH = ["Individual", "Country", "Nr_Samples", "Total SNPs", "Snps covered", "RateX", "RateY", "RateXerr", "RateYerr"]
+        tableB = flip map dat $ \(s, c, n) ->
+            let (cStr, tStr) = case lookup (unpack s) eagerSnpCov of
+                    Just (c, t) -> (show c, show t)
+                    Nothing -> ("n/a", "n/a")
+                (rXstr, rYstr, rXeStr, rYeStr) = case lookup (unpack s) eagerSexDet of
+                    Just (rX, rY, rXe, rYe) -> (printf "%.2f" rX , printf "%.2f" rY, printf "%.4f" rXe, printf "%.4f" rYe)
+                    Nothing -> ("n/a", "n/a", "n/a", "n/a")
+            in  [unpack s, unpack c, show n, tStr, cStr, rXstr, rYstr, rXeStr, rYeStr]
     putStrLn $ tableString colSpecs asciiRoundS (titlesH tableH) [rowsG tableB]
   where
     getSites :: IO [(Text, Text, Int)]
@@ -88,3 +96,4 @@ renderIndividuals conn eagerDirs = do
         \WHERE Sa.Projects LIKE '%MICROSCOPE%' \
         \GROUP BY I.Full_Individual_Id \
         \ORDER BY I.Full_Individual_Id"
+

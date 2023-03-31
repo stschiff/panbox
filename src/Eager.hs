@@ -4,33 +4,44 @@ module Eager where
 import           Utils
 
 import           Control.Exception (throwIO)
-import           Control.Monad     (forM, filterM)
+import           Control.Monad     (filterM, forM, sequence)
 import           Data.Aeson        (FromJSON (..), eitherDecodeFileStrict,
                                     withObject, (.:))
 import           Data.Aeson.Key    (toString)
 import           Data.Aeson.KeyMap (toList)
-import           System.Directory  (listDirectory, doesDirectoryExist)
-import           System.FilePath   ((</>), takeFileName)
+import Data.List (isSuffixOf)
+import           System.Directory  (doesDirectoryExist, listDirectory)
+import           System.FilePath   (takeFileName, (</>))
+import           System.IO         (hPrint, stderr)
+import           Text.Read         (readMaybe)
 -- import           System.FilePath            (takeBaseName, takeDirectory,
 --                                              takeExtension, takeFileName, (</>))
 
-data EagerSnpCovSingle = EagerSnpCovSingle {
-    indName     :: String,
-    coveredSnps :: Int,
-    totalSnps   :: Int
-} deriving (Show)
+newtype EagerSnpCov = EagerSnpCov [(String, (Int, Int))] deriving (Eq, Show)
 
-newtype EagerSnpCov = EagerSnpCov [EagerSnpCovSingle] deriving (Show)
+newtype EagerSexDet = EagerSexDet [(String, (Double, Double, Double, Double))] deriving (Eq, Show)
 
 instance FromJSON EagerSnpCov where
     parseJSON = withObject "EagerSnpCov" $ \v -> do
-        o <- v .: "pconfig"
-        o2 <- o .: "data"
-        singles <- forM (toList o2) $ \(key, val) -> do
-            c <- val .: "Covered_Snps"
-            t <- val .: "Total_Snps"
-            return $ EagerSnpCovSingle (toString key) c t
-        return $ EagerSnpCov singles
+        o <- v .: "data"
+        fmap EagerSnpCov . forM (toList o) $ \(key, val) -> do
+            cStr <- val .: "Covered_Snps"
+            tStr <- val .: "Total_Snps"
+            case (,) <$> readMaybe cStr <*> readMaybe tStr of
+                Just (c, t) -> return (toString key, (c, t))
+                Nothing     -> fail "could not parse Covered and Total SNPs: "
+
+instance FromJSON EagerSexDet where
+    parseJSON = withObject "EagerSexDet" $ \v -> do
+        let keyValuePairs = filter (isSuffixOf ".bam" . toString . fst) . toList $ v
+        fmap EagerSexDet . forM keyValuePairs $ \(key, val) -> withObject "EagerSexDetInternal" (processInternal key) val
+      where
+        processInternal key o = do
+            rateX <- o .: "RateX"
+            rateY <- o .: "RateY"
+            rateXerr <- o .: "RateErrX"
+            rateYerr <- o .: "RateErrY"
+            return (take 6 . toString $ key, (rateX, rateY, rateXerr, rateYerr))
 
 findAllFiles :: [FilePath] -> FilePath -> IO [FilePath]
 findAllFiles baseDirs filename = concat <$> mapM findAllFilesSingleDir baseDirs
@@ -42,16 +53,27 @@ findAllFiles baseDirs filename = concat <$> mapM findAllFilesSingleDir baseDirs
         morePosFiles <- fmap concat . mapM findAllFilesSingleDir $ subDirs
         return $ posFiles ++ morePosFiles
 
-readEagerSnpCov :: [FilePath] -> IO EagerSnpCov
+readEagerSnpCov :: [FilePath] -> IO [(String, (Int, Int))]
 readEagerSnpCov baseDirs = do
     allFiles1 <- findAllFiles baseDirs "single_eigenstrat_coverage_mqc.json"
     allFiles2 <- findAllFiles baseDirs "double_eigenstrat_coverage_mqc.json"
-    allSnpCovEntries <- forM (allFiles1 ++ allFiles2) parseEagerSnpCovJSON
-    return . EagerSnpCov . concat $ [e | EagerSnpCov e <- allSnpCovEntries]
+    concat <$> mapM parseEagerSnpCovJSON (allFiles1 ++ allFiles2)
 
-parseEagerSnpCovJSON :: FilePath -> IO EagerSnpCov
+parseEagerSnpCovJSON :: FilePath -> IO [(String, (Int, Int))]
 parseEagerSnpCovJSON fp = do
     eitherResult <- eitherDecodeFileStrict fp
     case eitherResult of
         Left e    -> throwIO $ EagerParsingException e
-        Right obj -> return obj
+        Right (EagerSnpCov entries) -> return entries
+
+parseEagerSexDet :: FilePath -> IO [(String, (Double, Double, Double, Double))]
+parseEagerSexDet fp = do
+    eitherResult <- eitherDecodeFileStrict fp
+    case eitherResult of
+        Left e    -> throwIO $ EagerParsingException e
+        Right (EagerSexDet entries) -> return entries
+
+readEagerSexDet :: [FilePath] -> IO [(String, (Double, Double, Double, Double))]
+readEagerSexDet baseDirs = do
+    f <- findAllFiles baseDirs "sexdeterrmine.json"
+    concat <$> mapM parseEagerSexDet f
