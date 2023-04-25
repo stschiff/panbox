@@ -1,5 +1,6 @@
 module Main (main) where
 
+import           Config
 import           Lib
 
 import           Control.Applicative (many)
@@ -8,20 +9,20 @@ import qualified Options.Applicative as OP
 data PandoraEntity = PandoraCountry | PandoraSite | PandoraIndividual | PandoraSample
 
 data Options = Options {
-    _optEntity   :: PandoraEntity,
-    _optEagerDir :: [FilePath]
+    _optEntity    :: PandoraEntity,
+    _optEagerDirs :: [FilePath]
 }
 
 main :: IO ()
 main = do
     let parserInfo = OP.info (OP.helper <*> optParser) (OP.progDesc "MPI-EVA Pandora access CLI")
-    (Options entity eagerDirs) <- OP.execParser parserInfo
-    (host, port, user, password) <- readSidoraCredentials
+    (Options entity eagerDirsCLI) <- OP.execParser parserInfo
+    (SimonConfig host port user password project eagerDirsConfig) <- readConfig
     conn <- getPandoraConnection host port user password
     case entity of
         PandoraCountry    -> renderCountries conn
         PandoraSite       -> renderSites conn
-        PandoraIndividual -> renderIndividuals conn eagerDirs
+        PandoraIndividual -> renderIndividuals conn (eagerDirsConfig ++ eagerDirsCLI)
         _                 -> undefined
 
 optParser :: OP.Parser Options

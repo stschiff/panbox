@@ -5,7 +5,6 @@ module Lib
       renderSites,
       renderIndividuals,
       getPandoraConnection,
-      readSidoraCredentials,
       Connection
     ) where
 
@@ -21,12 +20,6 @@ import           System.IO.Strict      (readFile)
 import           Text.Layout.Table     (asciiRoundS, column, def, expand, rowsG,
                                         tableString, titlesH)
 import Text.Printf (printf)
-
-readSidoraCredentials :: IO (String, Word16, String, String)
-readSidoraCredentials = do
-    h <- getEnv "HOME"
-    [host, portStr, user, password] <- lines <$> readFile (h ++ "/.credentials")
-    return (host, read portStr, user, password)
 
 getPandoraConnection :: String -> Word16 -> String -> String -> IO Connection
 getPandoraConnection host port user password = connect defaultConnectInfo {
